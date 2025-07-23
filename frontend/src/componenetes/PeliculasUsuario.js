@@ -17,6 +17,11 @@ const PeliculasUsuario = () => {
         }
     };
 
+    // Función para manejar el clic del botón
+    const handleVerDetalle = (idPelicula) => {
+        window.location.href = `/detalle-pelicula?id=${idPelicula}`; // Navegar a la página de detalle
+    };
+
     useEffect(() => {
         cargarPeliculas();
     }, []);
@@ -29,7 +34,7 @@ const PeliculasUsuario = () => {
                 {peliculas.map(pelicula => (
                     <div key={pelicula.IdPelicula} className="pelicula-card">
                         <div className="imagen-container">
-                            <img 
+                            <img
                                 className="pelicula-poster"
                                 src={pelicula.UrlPoster || '/imagenes/peliculaNE.jpg'}
                                 alt={pelicula.Titulo}
@@ -43,6 +48,12 @@ const PeliculasUsuario = () => {
                                     Director: {pelicula.Directore.Nombres} {pelicula.Directore.Apellidos}
                                 </p>
                             )}
+                            <button 
+                                className="btn-ver-detalle"
+                                onClick={() => handleVerDetalle(pelicula.IdPelicula)}
+                            >
+                                Ver Detalle
+                            </button>
                         </div>
                     </div>
                 ))}
@@ -51,4 +62,4 @@ const PeliculasUsuario = () => {
     );
 };
 
-export default PeliculasUsuario; 
+export default PeliculasUsuario;

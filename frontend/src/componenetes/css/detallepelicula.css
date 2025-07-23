@@ -1,0 +1,126 @@
+.detalle-pelicula-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.pelicula-header {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.detalle-poster {
+    width: 300px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.pelicula-info-detalle {
+    flex: 1;
+}
+
+.pelicula-info-detalle h1 {
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.año-estreno, .director {
+    margin: 10px 0;
+    color: #666;
+}
+
+.sinopsis {
+    line-height: 1.6;
+    margin: 20px 0;
+}
+
+.seccion-resenas {
+    margin-top: 40px;
+}
+
+.seccion-resenas h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.lista-resenas {
+    display: grid;
+    gap: 20px;
+}
+
+.resena-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.resena-card h3 {
+    margin: 0 0 10px 0;
+    color: #444;
+}
+
+.puntuacion {
+    color: #f39c12;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.cuerpo-resena {
+    line-height: 1.5;
+    margin: 15px 0;
+}
+
+.fecha-resena {
+    color: #888;
+    font-size: 0.9em;
+    text-align: right;
+}
+
+.nueva-resena-section {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.formulario-resena .form-group {
+    margin-bottom: 15px;
+}
+
+.formulario-resena label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.input-titulo, .textarea-resena {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.textarea-container {
+    position: relative;
+}
+
+.btn-enviar-flecha {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn-enviar-flecha:hover {
+    background: #0056b3;
+}

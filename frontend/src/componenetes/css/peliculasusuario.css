@@ -102,3 +102,18 @@
         padding: 1rem;
     }
 } 
+.btn-ver-detalle {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+.btn-ver-detalle:hover {
+    background-color: #0056b3;
+}

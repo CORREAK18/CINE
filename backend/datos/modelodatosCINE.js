@@ -289,12 +289,12 @@ const Resena = sequelize.define('Resena', {
     FechaCreacion: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: Sequelize.NOW
+        defaultValue: Sequelize.literal('GETDATE()')
     },
     Estado: {
         type: DataTypes.STRING(20),
         allowNull: false,
-        defaultValue: 'Pendiente'
+        defaultValue: 'Realizada'
     }
 }, {
     tableName: 'Resenas',

@@ -8,6 +8,8 @@ import Login from './Login';
 import Precios from './Precios';
 import Principal from '../App';
 import PeliculasUsuario from './PeliculasUsuario';
+import DetallePelicula from './DetallePelicula';
+import Resenas from './Resenas';
 
 import { jwtDecode } from 'jwt-decode';
 
@@ -42,6 +44,8 @@ function App() {
                 
                 {/* Rutas para usuario */}
                 <Route path="/peliculas" element={isUser() ? <PeliculasUsuario /> : <Navigate to="/" />} />
+                <Route path="/detalle-pelicula" element={isUser() ? <DetallePelicula /> : <Navigate to="/" />} />
+                <Route path="/mis-resenas" element={isUser() ? <Resenas /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Admin */}
                 <Route path="/admin/usuarios" element={isAdmin() ? <ReporteVentas /> : <Navigate to="/" />} />

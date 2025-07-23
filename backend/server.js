@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
@@ -361,6 +360,115 @@ app.get('/peliculas/:id', async (req, res) => {
         res.status(500).json({
             mensaje: 'Error al obtener la película',
             error: error.message
+        });
+    }
+});
+// Crear una nueva reseña
+app.post('/resenas', async (req, res) => {
+  try {
+    const { IdPelicula, IdUsuario, TituloResena, CuerpoResena, Puntuacion } = req.body;
+    const nueva = await Resena.create({
+      IdPelicula,
+      IdUsuario,
+      TituloResena,
+      CuerpoResena,
+      Puntuacion
+    });
+    res.status(201).json(nueva);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ mensaje: 'Error al crear reseña', error: error.message });
+  }
+});
+app.get('/peliculas/:id/resenas', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const resenas = await Resena.findAll({
+      where: { IdPelicula: id },
+      include: [
+        {
+          model: Usuario,
+          attributes: ['IdUsuario', 'NombreUsuario', 'Correo']
+        }
+      ],
+      order: [['FechaCreacion', 'DESC']]
+    });
+    if (resenas.length === 0) {
+      return res.status(404).json({ mensaje: 'No se encontraron reseñas para esta película' });
+    }
+    res.json(resenas);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al obtener reseñas de la película', error: error.message });
+  }
+});
+
+// Obtener reseñas de un usuario
+app.get('/usuarios/:id/resenas', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const resenas = await Resena.findAll({
+            where: { IdUsuario: id },
+            include: [{
+                model: Pelicula,
+                attributes: ['Titulo', 'Sinopsis']
+            }],
+            order: [['FechaCreacion', 'DESC']]
+        });
+        res.json(resenas);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ 
+            mensaje: 'Error al obtener las reseñas del usuario', 
+            error: error.message 
+        });
+    }
+});
+
+// Actualizar una reseña
+app.put('/resenas/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { TituloResena, CuerpoResena, Puntuacion } = req.body;
+        
+        const resena = await Resena.findByPk(id);
+        if (!resena) {
+            return res.status(404).json({ mensaje: 'Reseña no encontrada' });
+        }
+        
+        await resena.update({
+            TituloResena,
+            CuerpoResena,
+            Puntuacion
+        });
+        
+        res.json(resena);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ 
+            mensaje: 'Error al actualizar la reseña', 
+            error: error.message 
+        });
+    }
+});
+
+// Eliminar una reseña
+app.delete('/resenas/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const resena = await Resena.findByPk(id);
+        
+        if (!resena) {
+            return res.status(404).json({ mensaje: 'Reseña no encontrada' });
+        }
+        
+        await resena.destroy();
+        res.json({ mensaje: 'Reseña eliminada exitosamente' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ 
+            mensaje: 'Error al eliminar la reseña', 
+            error: error.message 
         });
     }
 });
