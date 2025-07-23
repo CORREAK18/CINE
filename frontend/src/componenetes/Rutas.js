@@ -7,6 +7,7 @@ import Menu from './Menu';
 import Login from './Login';
 import Precios from './Precios';
 import Principal from '../App';
+import PeliculasUsuario from './PeliculasUsuario';
 
 import { jwtDecode } from 'jwt-decode';
 
@@ -40,7 +41,7 @@ function App() {
                 
                 
                 {/* Rutas para usuario */}
-                <Route path="/alumno/cursos" element={isUser() ? <Precios /> : <Navigate to="/" />} />
+                <Route path="/peliculas" element={isUser() ? <PeliculasUsuario /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Admin */}
                 <Route path="/admin/usuarios" element={isAdmin() ? <ReporteVentas /> : <Navigate to="/" />} />

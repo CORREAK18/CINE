@@ -298,7 +298,7 @@ const Resena = sequelize.define('Resena', {
     }
 }, {
     tableName: 'Resenas',
-    timestamps: false
+    timestamps:  false
 });
 
 // Definir las relaciones

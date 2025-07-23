@@ -20,13 +20,13 @@ function Menu() {
 
             // Menú específico para cada rol
             switch (userRole) {
-                case 1:
+                case 'usuario':
                     return [
                         ...baseMenu,
                         { path: "/peliculas", text: "Catálogo de Películas" },
                         { path: "/mis-resenas", text: "Mis Reseñas" }
                     ];
-                case 3:
+                case 'Administrador':
                     return [
                         ...baseMenu,
                         { path: "/admin/peliculas", text: "Gestión de Películas" },
