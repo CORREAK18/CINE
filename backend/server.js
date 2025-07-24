@@ -554,6 +554,49 @@ app.delete('/peliculas/eliminar/:id', verificarToken, verificarAdmin, async (req
     }
 });
 
+// Endpoint para administradores: obtener todas las películas (activas e inactivas)
+app.get('/admin/peliculas', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const peliculas = await Pelicula.findAll({
+            include: [
+                { 
+                    model: Director,
+                    attributes: ['IdDirector', 'Nombres', 'Apellidos']
+                },
+                {
+                    model: Genero,
+                    through: { attributes: [] },
+                    attributes: ['IdGenero', 'NombreGenero']
+                }
+            ],
+            order: [['IdPelicula', 'ASC']]
+        });
+
+        // Formatear los datos para el frontend
+        const peliculasFormateadas = peliculas.map(pelicula => ({
+            IdPelicula: pelicula.IdPelicula,
+            Titulo: pelicula.Titulo,
+            Sinopsis: pelicula.Sinopsis,
+            AnoEstreno: pelicula.AnioEstreno,
+            IdDirector: pelicula.IdDirector,
+            NombreDirector: pelicula.Director ? `${pelicula.Director.Nombres} ${pelicula.Director.Apellidos}` : 'Sin director',
+            UrlPoster: pelicula.UrlPoster,
+            UrlTrailer: pelicula.UrlTrailer,
+            FechaPublicacion: pelicula.FechaPublicacion,
+            Estado: pelicula.Estado,
+            CalificacionPromedio: pelicula.CalificacionPromedio || 0
+        }));
+
+        res.json(peliculasFormateadas);
+    } catch (error) {
+        console.error('Error al obtener películas para administrador:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener las películas',
+            error: error.message
+        });
+    }
+});
+
 app.get('/peliculas', async (req, res) => {
     try {
         const peliculas = await Pelicula.findAll({

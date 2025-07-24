@@ -11,6 +11,7 @@ import Actores from './Actores';
 import Precios from './Precios';
 import GestionUsuario from './GestionUsuario';
 import VerResenaUser from './VerResenaUser';
+import CrudPeliculas from './CrudPeliculas';
 
 import PeliculasUsuario from './PeliculasUsuario';
 import DetallePelicula from './DetallePelicula';
@@ -54,6 +55,7 @@ function App() {
                 <Route path="/mis-resenas" element={isUser() ? <Resenas /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Admin */}
+                <Route path="/admin/peliculas" element={isAdmin() ? <CrudPeliculas /> : <Navigate to="/" />} />
                 <Route path="/admin/usuarios" element={isAdmin() ? <GestionUsuario /> : <Navigate to="/" />} />
                 <Route path="/admin/directores" element={isAdmin() ? <Directores /> : <Navigate to="/" />} />
                 <Route path="/admin/actores" element={isAdmin() ? <Actores /> : <Navigate to="/" />} />
