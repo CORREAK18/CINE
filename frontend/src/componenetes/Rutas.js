@@ -9,6 +9,8 @@ import RegistrarUsuarios from './RegistrarUsuarios';
 import Directores from './Directores';
 import Actores from './Actores';
 import Precios from './Precios';
+import GestionUsuario from './GestionUsuario';
+import VerResenaUser from './VerResenaUser';
 
 import PeliculasUsuario from './PeliculasUsuario';
 import DetallePelicula from './DetallePelicula';
@@ -52,9 +54,10 @@ function App() {
                 <Route path="/mis-resenas" element={isUser() ? <Resenas /> : <Navigate to="/" />} />
                 
                 {/* Rutas para Admin */}
-                <Route path="/admin/usuarios" element={isAdmin() ? <ReporteVentas /> : <Navigate to="/" />} />
+                <Route path="/admin/usuarios" element={isAdmin() ? <GestionUsuario /> : <Navigate to="/" />} />
                 <Route path="/admin/directores" element={isAdmin() ? <Directores /> : <Navigate to="/" />} />
                 <Route path="/admin/actores" element={isAdmin() ? <Actores /> : <Navigate to="/" />} />
+                <Route path="/admin/ver-resenas-usuario/:id" element={isAdmin() ? <VerResenaUser /> : <Navigate to="/" />} />
 
                 {/* Rutas heredadas del sistema anterior */}
                 <Route path="/Precios" element={isAuthenticated ? <Precios /> : <Navigate to="/" />} />

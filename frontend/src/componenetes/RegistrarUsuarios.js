@@ -19,9 +19,8 @@ const RegistrarUsuarios = () => {
                 contraseña: contrasena
             });
             
-            // Guardar el token y redirigir
-            localStorage.setItem('token', response.data.token);
-            navigate('/menu');
+            
+            navigate('/');
         } catch (error) {
             alert(error.response?.data?.mensaje || 'Error al registrar usuario');
         }

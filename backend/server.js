@@ -80,7 +80,7 @@ app.post('/usuarios/registro', async (req, res) => {
             NombreUsuario: nombreUsuario,
             Correo: correo,
             ClaveHash: contraseña,
-            IdRol: 2, // Rol normal de usuario
+            IdRol: 1, // Rol normal de usuario
             EstaActivo: true
         });
 
@@ -735,6 +735,58 @@ app.delete('/resenas/:id', async (req, res) => {
         });
     }
 });
+
+// Endpoints para gestión de usuarios (admin)
+app.get('/admin/usuarios', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const usuarios = await Usuario.findAll({
+            attributes: ['IdUsuario', 'NombreUsuario', 'Correo', 'EstaActivo', 'FechaRegistro'],
+            include: [{
+                model: Rol,
+                attributes: ['NombreRol']
+            }],
+            order: [['FechaRegistro', 'DESC']]
+        });
+        res.json(usuarios);
+    } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener la lista de usuarios',
+            error: error.message
+        });
+    }
+});
+
+app.put('/admin/usuarios/:id/estado', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const usuario = await Usuario.findByPk(id);
+        
+        if (!usuario) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+        }
+
+        // Cambiar el estado del usuario
+        await usuario.update({
+            EstaActivo: !usuario.EstaActivo
+        });
+
+        res.json({
+            mensaje: `Usuario ${usuario.EstaActivo ? 'activado' : 'desactivado'} exitosamente`,
+            usuario: {
+                id: usuario.IdUsuario,
+                nombreUsuario: usuario.NombreUsuario,
+                estaActivo: usuario.EstaActivo
+            }
+        });
+    } catch (error) {
+        console.error('Error al actualizar estado del usuario:', error);
+        res.status(500).json({
+            mensaje: 'Error al actualizar el estado del usuario',
+            error: error.message
+        });
+    }
+});
 app.get('/peliculas/:id/actualizar-promedio', async (req, res) => {
   const { id } = req.params;
   
@@ -767,6 +819,104 @@ app.get('/peliculas/:id/actualizar-promedio', async (req, res) => {
       error: error.message
     });
   }
+});
+
+// Endpoints para la gestión de usuarios (admin)
+app.get('/admin/usuarios', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const usuarios = await Usuario.findAll({
+            attributes: ['id', 'username', 'email', 'estado'],
+            include: [{
+                model: Rol,
+                attributes: ['nombre']
+            }]
+        });
+        res.json(usuarios);
+    } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener la lista de usuarios',
+            error: error.message
+        });
+    }
+});
+
+app.put('/admin/usuarios/:id/estado', verificarToken, verificarAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    try {
+        const usuario = await Usuario.findByPk(id);
+        if (!usuario) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+        }
+
+        await usuario.update({ estado });
+        res.json({ mensaje: 'Estado del usuario actualizado con éxito' });
+    } catch (error) {
+        console.error('Error al actualizar estado del usuario:', error);
+        res.status(500).json({
+            mensaje: 'Error al actualizar el estado del usuario',
+            error: error.message
+        });
+    }
+});
+
+app.get('/usuarios/:id', verificarToken, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const usuario = await Usuario.findByPk(id, {
+            attributes: ['id', 'username', 'email', 'estado'],
+            include: [{
+                model: Rol,
+                attributes: ['nombre']
+            }]
+        });
+
+        if (!usuario) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+        }
+
+        res.json(usuario);
+    } catch (error) {
+        console.error('Error al obtener usuario:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los datos del usuario',
+            error: error.message
+        });
+    }
+});
+
+app.get('/resenas/usuario/:id', verificarToken, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const resenas = await Resena.findAll({
+            where: { UsuarioId: id },
+            include: [{
+                model: Pelicula,
+                attributes: ['titulo']
+            }],
+            order: [['fecha', 'DESC']]
+        });
+
+        const resenasFormateadas = resenas.map(resena => ({
+            id: resena.id,
+            fecha: resena.fecha,
+            puntuacion: resena.puntuacion,
+            comentario: resena.comentario,
+            pelicula: resena.Pelicula.titulo
+        }));
+
+        res.json(resenasFormateadas);
+    } catch (error) {
+        console.error('Error al obtener reseñas del usuario:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener las reseñas del usuario',
+            error: error.message
+        });
+    }
 });
 
 // Inicializar servidor
