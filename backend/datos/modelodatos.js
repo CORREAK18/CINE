@@ -273,12 +273,4 @@ Usuario.hasMany(SolicitudCurso, { as: 'SolicitudesCurso', foreignKey: 'AlumnoId'
 MaterialCurso.belongsTo(Curso, { foreignKey: 'CursoId' });
 Curso.hasMany(MaterialCurso, { foreignKey: 'CursoId' });
 
-// Exportar los modelos
-module.exports = {
-    sequelize,
-    Rol,
-    Usuario,
-    Curso,
-    SolicitudCurso,
-    MaterialCurso
-};
+
