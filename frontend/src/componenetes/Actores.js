@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Table, Button, Form, Modal } from 'react-bootstrap';
-import './css/directores.css'; // Reutilizamos los estilos de directores
+import './css/actores.css';
 
 const Actores = () => {
     const [actores, setActores] = useState([]);
@@ -101,8 +101,8 @@ const Actores = () => {
     };
 
     return (
-        <div className="directores-container">
-            <div className="directores-header">
+        <div className="actores-container">
+            <div className="actores-header">
                 <h2>Gestión de Actores</h2>
                 <Button variant="primary" onClick={handleNuevo}>
                     Nuevo Actor
