@@ -18,7 +18,7 @@ const {
     PeliculaActor, 
     Resena 
 } = require('./datos/modelodatosCINE');
-const { Op } = require('sequelize');
+const { Op, QueryTypes } = require('sequelize');
 
 // Middleware de autenticación
 const verificarToken = (req, res, next) => {
@@ -471,6 +471,39 @@ app.delete('/resenas/:id', async (req, res) => {
             error: error.message 
         });
     }
+});
+app.get('/peliculas/:id/actualizar-promedio', async (req, res) => {
+  const { id } = req.params;
+  
+  if (!id || isNaN(id)) {
+    return res.status(400).json({ 
+      mensaje: 'ID de película inválido' 
+    });
+  }
+
+  try {
+    const resultados = await sequelize.query(
+      'EXEC sp_ActualizarPromedioPelicula @IdPelicula = :IdPelicula',
+      {
+        replacements: { IdPelicula: id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    if (resultados.length === 0) {
+      return res.status(404).json({ 
+        mensaje: 'Película no encontrada o sin reseñas.' 
+      });
+    }
+    
+    res.json(resultados[0]);
+  } catch (error) {
+    console.error('Error al actualizar promedio de película:', error);
+    res.status(500).json({
+      mensaje: 'Error al actualizar el promedio de la película',
+      error: error.message
+    });
+  }
 });
 
 // Inicializar servidor

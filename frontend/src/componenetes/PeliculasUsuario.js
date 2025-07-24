@@ -43,9 +43,9 @@ const PeliculasUsuario = () => {
                         <div className="pelicula-info">
                             <h3>{pelicula.Titulo}</h3>
                             <p className="año">Año: {pelicula.AnioEstreno}</p>
-                            {pelicula.Directore && (
+                            {pelicula.Director && (
                                 <p className="director">
-                                    Director: {pelicula.Directore.Nombres} {pelicula.Directore.Apellidos}
+                                    Director: {pelicula.Director.Nombres} {pelicula.Director.Apellidos}
                                 </p>
                             )}
                             <button 
