@@ -15,7 +15,6 @@ function Menu() {
             // Menú base (compartido por todos los roles)
             const baseMenu = [
                 { path: "/inicio", text: "Inicio" },
-                { path: "/menu", text: "Menú Principal" }
             ];
 
             // Menú específico para cada rol
@@ -30,7 +29,8 @@ function Menu() {
                     return [
                         ...baseMenu,
                         { path: "/admin/peliculas", text: "Gestión de Películas" },
-                        { path: "/admin/usuarios", text: "Gestión de Usuarios" }
+                        { path: "/admin/usuarios", text: "Gestión de Usuarios" },
+                        { path: "/admin/directores", text: "Gestión de Directores" }
                     ];
                 default:
                     return baseMenu;

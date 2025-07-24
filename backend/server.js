@@ -39,7 +39,7 @@ const verificarToken = (req, res, next) => {
 
 // Middleware para verificar rol de administrador
 const verificarAdmin = (req, res, next) => {
-    if (req.usuario.rol !== 1) { // Asumiendo que IdRol 1 es para administradores
+    if (req.usuario.rol !== 'Administrador') {
         return res.status(403).json({ mensaje: 'Acceso denegado: se requiere rol de administrador' });
     }
     next();
@@ -180,6 +180,136 @@ app.post('/login', async (req, res) => {
         console.error('Error en login:', error);
         return res.status(500).json({
             mensaje: 'Error al procesar el inicio de sesión'
+        });
+    }
+});
+
+// Endpoints de Directores
+app.get('/directores', verificarToken, async (req, res) => {
+    try {
+        const directores = await Director.findAll({
+            attributes: ['IdDirector', 'Nombres', 'Apellidos', 'FechaNacimiento'],
+            order: [['Apellidos', 'ASC'], ['Nombres', 'ASC']]
+        });
+        res.json(directores);
+    } catch (error) {
+        console.error('Error al obtener directores:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener la lista de directores',
+            error: error.message
+        });
+    }
+});
+
+app.get('/directores/:id', verificarToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const director = await Director.findByPk(id, {
+            include: [{
+                model: Pelicula,
+                attributes: ['IdPelicula', 'Titulo', 'AnioEstreno']
+            }]
+        });
+
+        if (!director) {
+            return res.status(404).json({ mensaje: 'Director no encontrado' });
+        }
+
+        res.json(director);
+    } catch (error) {
+        console.error('Error al obtener director:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener el director',
+            error: error.message
+        });
+    }
+});
+
+app.post('/directores', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const { Nombres, Apellidos, FechaNacimiento } = req.body;
+
+        if (!Nombres || !Apellidos) {
+            return res.status(400).json({
+                mensaje: 'Nombres y Apellidos son obligatorios'
+            });
+        }
+
+        const nuevoDirector = await Director.create({
+            Nombres,
+            Apellidos,
+            FechaNacimiento: FechaNacimiento || null
+        });
+
+        res.status(201).json({
+            mensaje: 'Director registrado exitosamente',
+            director: nuevoDirector
+        });
+    } catch (error) {
+        console.error('Error al crear director:', error);
+        res.status(500).json({
+            mensaje: 'Error al registrar el director',
+            error: error.message
+        });
+    }
+});
+
+app.put('/directores/:id', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { Nombres, Apellidos, FechaNacimiento } = req.body;
+
+        const director = await Director.findByPk(id);
+        if (!director) {
+            return res.status(404).json({ mensaje: 'Director no encontrado' });
+        }
+
+        await director.update({
+            Nombres: Nombres || director.Nombres,
+            Apellidos: Apellidos || director.Apellidos,
+            FechaNacimiento: FechaNacimiento || director.FechaNacimiento
+        });
+
+        res.json({
+            mensaje: 'Director actualizado exitosamente',
+            director
+        });
+    } catch (error) {
+        console.error('Error al actualizar director:', error);
+        res.status(500).json({
+            mensaje: 'Error al actualizar el director',
+            error: error.message
+        });
+    }
+});
+
+app.delete('/directores/:id', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const director = await Director.findByPk(id);
+
+        if (!director) {
+            return res.status(404).json({ mensaje: 'Director no encontrado' });
+        }
+
+        // Verificar si tiene películas asociadas
+        const peliculasAsociadas = await Pelicula.count({
+            where: { IdDirector: id }
+        });
+
+        if (peliculasAsociadas > 0) {
+            return res.status(400).json({
+                mensaje: 'No se puede eliminar el director porque tiene películas asociadas'
+            });
+        }
+
+        await director.destroy();
+        res.json({ mensaje: 'Director eliminado exitosamente' });
+    } catch (error) {
+        console.error('Error al eliminar director:', error);
+        res.status(500).json({
+            mensaje: 'Error al eliminar el director',
+            error: error.message
         });
     }
 });

@@ -39,6 +39,7 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   letter-spacing: 0.5px;
   transition: color 0.3s ease;
+  margin-left: 150px;
 }
 
 .header h1:hover {
@@ -127,4 +128,54 @@
 
 .header {
   animation: fadeIn 0.5s ease-out;
+}
+
+/* Footer CSS */
+.footer {
+    background-color: #333;
+    color: white;
+    padding: 20px 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.footer p {
+    margin: 0;
+    text-align: center;
+}
+
+.footer nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.footer nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.footer nav ul li a:hover {
+    text-decoration: underline;
+}
+
+/* Ajuste para el contenido principal */
+body {
+    margin-bottom: 120px; /* Ajusta este valor según la altura de tu footer */
+}
+
+/* Asegurarse de que los contenedores principales no sean tapados por el footer */
+.directores-container,
+.inicio-container,
+.login-container,
+.peliculas-container,
+.container {
+    padding-bottom: 120px; /* Mismo valor que el margin-bottom del body */
 }

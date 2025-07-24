@@ -5,8 +5,10 @@ import Footer from "./Footer";
 import Header from "./Header";
 import Menu from './Menu';
 import Login from './Login';
+import RegistrarUsuarios from './RegistrarUsuarios';
+import Directores from './Directores';
 import Precios from './Precios';
-import Principal from '../App';
+
 import PeliculasUsuario from './PeliculasUsuario';
 import DetallePelicula from './DetallePelicula';
 import Resenas from './Resenas';
@@ -38,8 +40,9 @@ function App() {
             <Routes>
                 {/* Rutas públicas */}
                 <Route path="/" element={isAuthenticated ? <Navigate to="/inicio" /> : <Login />} />
+                <Route path="/registro" element={isAuthenticated ? <Navigate to="/inicio" /> : <RegistrarUsuarios />} />
                 <Route path="/inicio" element={isAuthenticated ? <Inicio /> : <Navigate to="/" />} />
-                <Route path="/menu" element={isAuthenticated ? <Principal /> : <Navigate to="/" />} />
+                
                 
                 
                 {/* Rutas para usuario */}
@@ -49,6 +52,7 @@ function App() {
                 
                 {/* Rutas para Admin */}
                 <Route path="/admin/usuarios" element={isAdmin() ? <ReporteVentas /> : <Navigate to="/" />} />
+                <Route path="/admin/directores" element={isAdmin() ? <Directores /> : <Navigate to="/" />} />
 
                 {/* Rutas heredadas del sistema anterior */}
                 <Route path="/Precios" element={isAuthenticated ? <Precios /> : <Navigate to="/" />} />

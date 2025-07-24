@@ -16,7 +16,7 @@ const Login = () => {
             });
             
             localStorage.setItem('token', response.data.token);
-            window.location.href = "/menu";
+            window.location.href = "/Inicio";
         } catch (error) {
             alert(error.response?.data?.mensaje || 'Error al iniciar sesión');
         }
@@ -61,6 +61,9 @@ const Login = () => {
                     <button type="submit" className="custom-button">
                         Iniciar Sesión
                     </button>
+                    <p className="mt-3 text-center">
+                        ¿No tienes una cuenta? <a href="/registro">Registrarse</a>
+                    </p>
                 </Form>
             </div>
         </div>
