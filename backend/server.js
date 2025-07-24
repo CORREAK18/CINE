@@ -314,6 +314,139 @@ app.delete('/directores/:id', verificarToken, verificarAdmin, async (req, res) =
     }
 });
 
+// Endpoints de Actores
+app.get('/actores', verificarToken, async (req, res) => {
+    try {
+        const actores = await Actor.findAll({
+            attributes: ['IdActor', 'Nombres', 'Apellidos', 'FechaNacimiento'],
+            order: [['Apellidos', 'ASC'], ['Nombres', 'ASC']]
+        });
+        res.json(actores);
+    } catch (error) {
+        console.error('Error al obtener actores:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener la lista de actores',
+            error: error.message
+        });
+    }
+});
+
+app.get('/actores/:id', verificarToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const actor = await Actor.findByPk(id, {
+            include: [{
+                model: Pelicula,
+                through: {
+                    attributes: ['NombrePersonaje']
+                },
+                attributes: ['IdPelicula', 'Titulo', 'AnioEstreno']
+            }]
+        });
+
+        if (!actor) {
+            return res.status(404).json({ mensaje: 'Actor no encontrado' });
+        }
+
+        res.json(actor);
+    } catch (error) {
+        console.error('Error al obtener actor:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener el actor',
+            error: error.message
+        });
+    }
+});
+
+app.post('/actores', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const { Nombres, Apellidos, FechaNacimiento } = req.body;
+
+        if (!Nombres || !Apellidos) {
+            return res.status(400).json({
+                mensaje: 'Nombres y Apellidos son obligatorios'
+            });
+        }
+
+        const nuevoActor = await Actor.create({
+            Nombres,
+            Apellidos,
+            FechaNacimiento: FechaNacimiento || null
+        });
+
+        res.status(201).json({
+            mensaje: 'Actor registrado exitosamente',
+            actor: nuevoActor
+        });
+    } catch (error) {
+        console.error('Error al crear actor:', error);
+        res.status(500).json({
+            mensaje: 'Error al registrar el actor',
+            error: error.message
+        });
+    }
+});
+
+app.put('/actores/:id', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { Nombres, Apellidos, FechaNacimiento } = req.body;
+
+        const actor = await Actor.findByPk(id);
+        if (!actor) {
+            return res.status(404).json({ mensaje: 'Actor no encontrado' });
+        }
+
+        await actor.update({
+            Nombres: Nombres || actor.Nombres,
+            Apellidos: Apellidos || actor.Apellidos,
+            FechaNacimiento: FechaNacimiento || actor.FechaNacimiento
+        });
+
+        res.json({
+            mensaje: 'Actor actualizado exitosamente',
+            actor
+        });
+    } catch (error) {
+        console.error('Error al actualizar actor:', error);
+        res.status(500).json({
+            mensaje: 'Error al actualizar el actor',
+            error: error.message
+        });
+    }
+});
+
+app.delete('/actores/:id', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const actor = await Actor.findByPk(id);
+
+        if (!actor) {
+            return res.status(404).json({ mensaje: 'Actor no encontrado' });
+        }
+
+        // Verificar si tiene películas asociadas
+        const peliculasAsociadas = await PeliculaActor.count({
+            where: { IdActor: id }
+        });
+
+        if (peliculasAsociadas > 0) {
+            return res.status(400).json({
+                mensaje: 'No se puede eliminar el actor porque tiene películas asociadas'
+            });
+        }
+
+        await actor.destroy();
+        res.json({ mensaje: 'Actor eliminado exitosamente' });
+    } catch (error) {
+        console.error('Error al eliminar actor:', error);
+        res.status(500).json({
+            mensaje: 'Error al eliminar el actor',
+            error: error.message
+        });
+    }
+});
+
 // Endpoints de películas
 app.post('/peliculas/registro', verificarToken, verificarAdmin, async (req, res) => {
     try {

@@ -7,6 +7,7 @@ import Menu from './Menu';
 import Login from './Login';
 import RegistrarUsuarios from './RegistrarUsuarios';
 import Directores from './Directores';
+import Actores from './Actores';
 import Precios from './Precios';
 
 import PeliculasUsuario from './PeliculasUsuario';
@@ -53,6 +54,7 @@ function App() {
                 {/* Rutas para Admin */}
                 <Route path="/admin/usuarios" element={isAdmin() ? <ReporteVentas /> : <Navigate to="/" />} />
                 <Route path="/admin/directores" element={isAdmin() ? <Directores /> : <Navigate to="/" />} />
+                <Route path="/admin/actores" element={isAdmin() ? <Actores /> : <Navigate to="/" />} />
 
                 {/* Rutas heredadas del sistema anterior */}
                 <Route path="/Precios" element={isAuthenticated ? <Precios /> : <Navigate to="/" />} />
