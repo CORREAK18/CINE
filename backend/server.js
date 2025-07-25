@@ -463,22 +463,38 @@ app.post('/peliculas/registro', verificarToken, verificarAdmin, async (req, res)
             return res.status(400).json({ mensaje: 'Título y año de estreno son obligatorios.' });
         }
 
-        const nuevaPelicula = await Pelicula.create({
-            Titulo,
-            Sinopsis: Sinopsis || null,
-            AnioEstreno,
-            IdDirector: IdDirector || null,
-            UrlPoster: UrlPoster || null,
-            UrlTrailer: UrlTrailer || null,
-            Estado: 'Publicado',
-            FechaPublicacion: sequelize.literal('GETDATE()'),
-            CalificacionPromedio: null
-        });
+        const { actores } = req.body; // Array de objetos {IdActor, NombrePersonaje}
+        
+        const t = await sequelize.transaction();
+        
+        try {
+            const nuevaPelicula = await Pelicula.create({
+                Titulo,
+                Sinopsis: Sinopsis || null,
+                AnioEstreno,
+                IdDirector: IdDirector || null,
+                UrlPoster: UrlPoster || null,
+                UrlTrailer: UrlTrailer || null,
+                Estado: 'Publicado',
+                FechaPublicacion: sequelize.literal('GETDATE()'),
+                CalificacionPromedio: null
+            }, { transaction: t });
 
-        res.status(201).json({
-            mensaje: 'Película registrada exitosamente',
-            pelicula: nuevaPelicula
-        });
+            if (actores && actores.length > 0) {
+                const relacionesActores = actores.map(actor => ({
+                    IdPelicula: nuevaPelicula.IdPelicula,
+                    IdActor: actor.IdActor,
+                    NombrePersonaje: actor.NombrePersonaje
+                }));
+
+                await PeliculaActor.bulkCreate(relacionesActores, { transaction: t });
+            }
+
+            await t.commit();
+            res.status(201).json({
+                mensaje: 'Película registrada exitosamente',
+                pelicula: nuevaPelicula
+            });
 
     } catch (error) {
         console.error('Error al registrar la película:', error);
@@ -554,6 +570,135 @@ app.delete('/peliculas/eliminar/:id', verificarToken, verificarAdmin, async (req
     }
 });
 
+// Endpoint para administradores: obtener todas las películas (activas e inactivas)
+app.get('/admin/peliculas', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        const peliculas = await Pelicula.findAll({
+            include: [
+                { 
+                    model: Director,
+                    attributes: ['IdDirector', 'Nombres', 'Apellidos']
+                },
+                {
+                    model: Genero,
+                    through: { attributes: [] },
+                    attributes: ['IdGenero', 'NombreGenero']
+                }
+            ],
+            order: [['IdPelicula', 'ASC']]
+        });
+
+        // Formatear los datos para el frontend
+        const peliculasFormateadas = peliculas.map(pelicula => ({
+            IdPelicula: pelicula.IdPelicula,
+            Titulo: pelicula.Titulo,
+            Sinopsis: pelicula.Sinopsis,
+            AnoEstreno: pelicula.AnioEstreno,
+            IdDirector: pelicula.IdDirector,
+            NombreDirector: pelicula.Director ? `${pelicula.Director.Nombres} ${pelicula.Director.Apellidos}` : 'Sin director',
+            UrlPoster: pelicula.UrlPoster,
+            UrlTrailer: pelicula.UrlTrailer,
+            FechaPublicacion: pelicula.FechaPublicacion,
+            Estado: pelicula.Estado,
+            CalificacionPromedio: pelicula.CalificacionPromedio || 0
+        }));
+
+        res.json(peliculasFormateadas);
+    } catch (error) {
+        console.error('Error al obtener películas para administrador:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener las películas',
+            error: error.message
+        });
+    }
+});
+
+// Endpoints para actores
+app.get('/actores', verificarToken, async (req, res) => {
+    try {
+        const actores = await Actor.findAll({
+            attributes: ['IdActor', 'Nombres', 'Apellidos', 'FechaNacimiento'],
+            order: [['Apellidos', 'ASC'], ['Nombres', 'ASC']]
+        });
+        res.json(actores);
+    } catch (error) {
+        console.error('Error al obtener actores:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los actores',
+            error: error.message
+        });
+    }
+});
+
+// Endpoint para obtener los actores de una película específica
+app.get('/peliculas/:id/actores', verificarToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const actoresPelicula = await PeliculaActor.findAll({
+            where: { IdPelicula: id },
+            include: [{
+                model: Actor,
+                attributes: ['IdActor', 'Nombres', 'Apellidos']
+            }]
+        });
+
+        res.json(actoresPelicula.map(pa => ({
+            ...pa.Actor.dataValues,
+            NombrePersonaje: pa.NombrePersonaje
+        })));
+    } catch (error) {
+        console.error('Error al obtener actores de la película:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los actores de la película',
+            error: error.message
+        });
+    }
+});
+
+// Endpoint para asignar actores a una película
+app.post('/peliculas/:id/actores', verificarToken, verificarAdmin, async (req, res) => {
+    const t = await sequelize.transaction();
+    try {
+        const { id } = req.params;
+        const { actores } = req.body; // Array de objetos {IdActor, NombrePersonaje}
+
+        // Verificar que la película existe
+        const pelicula = await Pelicula.findByPk(id);
+        if (!pelicula) {
+            throw new Error('Película no encontrada');
+        }
+
+        // Eliminar relaciones existentes
+        await PeliculaActor.destroy({
+            where: { IdPelicula: id },
+            transaction: t
+        });
+
+        // Crear nuevas relaciones
+        const relacionesActores = actores.map(actor => ({
+            IdPelicula: id,
+            IdActor: actor.IdActor,
+            NombrePersonaje: actor.NombrePersonaje
+        }));
+
+        await PeliculaActor.bulkCreate(relacionesActores, { transaction: t });
+
+        await t.commit();
+        res.json({
+            mensaje: 'Actores asignados exitosamente',
+            actores: relacionesActores
+        });
+    } catch (error) {
+        await t.rollback();
+        console.error('Error al asignar actores:', error);
+        res.status(500).json({
+            mensaje: 'Error al asignar actores a la película',
+            error: error.message
+        });
+    }
+});
+
+// Modificar los endpoints existentes de películas para incluir actores
 app.get('/peliculas', async (req, res) => {
     try {
         const peliculas = await Pelicula.findAll({

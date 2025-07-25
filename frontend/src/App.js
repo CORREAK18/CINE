@@ -1,12 +1,11 @@
 import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import Rutas from './componenetes/Rutas';
 
-import Cuerpo from './componenetes/Cuerpo';
 function App() {
   return (
     <>
-  {/* Aquí agregamos la cabecera */}
-      <Cuerpo/>
-     
+      <Rutas/>
     </>
   );
 }
