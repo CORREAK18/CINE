@@ -458,7 +458,8 @@ app.post('/peliculas/registro', verificarToken, verificarAdmin, async (req, res)
             IdDirector,
             UrlPoster,
             UrlTrailer,
-            actores // Se extrae directamente aquí
+            actores, // Array de actores con IdActor y NombrePersonaje
+            generos  // Array de IDs de géneros
         } = req.body;
 
         if (!Titulo || !AnioEstreno) {
@@ -480,6 +481,7 @@ app.post('/peliculas/registro', verificarToken, verificarAdmin, async (req, res)
                 CalificacionPromedio: null
             }, { transaction: t });
 
+            // Asignar actores si se proporcionaron
             if (actores && actores.length > 0) {
                 const relacionesActores = actores.map(actor => ({
                     IdPelicula: nuevaPelicula.IdPelicula,
@@ -488,6 +490,16 @@ app.post('/peliculas/registro', verificarToken, verificarAdmin, async (req, res)
                 }));
 
                 await PeliculaActor.bulkCreate(relacionesActores, { transaction: t });
+            }
+
+            // Asignar géneros si se proporcionaron
+            if (generos && generos.length > 0) {
+                const relacionesGeneros = generos.map(idGenero => ({
+                    IdPelicula: nuevaPelicula.IdPelicula,
+                    IdGenero: idGenero
+                }));
+
+                await PeliculaGenero.bulkCreate(relacionesGeneros, { transaction: t });
             }
 
             await t.commit();
@@ -661,6 +673,96 @@ app.get('/peliculas/:id/actores', verificarToken, async (req, res) => {
         console.error('Error al obtener actores de la película:', error);
         res.status(500).json({
             mensaje: 'Error al obtener los actores de la película',
+            error: error.message
+        });
+    }
+});
+
+// Endpoint para obtener todos los géneros
+app.get('/generos', verificarToken, async (req, res) => {
+    try {
+        const generos = await Genero.findAll({
+            attributes: ['IdGenero', 'NombreGenero'],
+            order: [['NombreGenero', 'ASC']]
+        });
+
+        if (!generos || generos.length === 0) {
+            return res.status(404).json({
+                mensaje: 'No se encontraron géneros registrados'
+            });
+        }
+
+        res.json(generos);
+    } catch (error) {
+        console.error('Error al obtener géneros:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los géneros',
+            error: error.message
+        });
+    }
+});
+
+// Endpoint para obtener los géneros de una película específica
+app.get('/peliculas/:id/generos', verificarToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const generosPelicula = await PeliculaGenero.findAll({
+            where: { IdPelicula: id },
+            include: [{
+                model: Genero,
+                attributes: ['IdGenero', 'NombreGenero']
+            }]
+        });
+
+        res.json(generosPelicula.map(pg => pg.Genero));
+    } catch (error) {
+        console.error('Error al obtener géneros de la película:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener los géneros de la película',
+            error: error.message
+        });
+    }
+});
+
+// Endpoint para actualizar los géneros de una película
+app.post('/peliculas/:id/generos', verificarToken, verificarAdmin, async (req, res) => {
+    const t = await sequelize.transaction();
+    try {
+        const { id } = req.params;
+        const { generos } = req.body; // Array de IDs de géneros
+
+        // Verificar que la película existe
+        const pelicula = await Pelicula.findByPk(id);
+        if (!pelicula) {
+            throw new Error('Película no encontrada');
+        }
+
+        // Eliminar relaciones existentes
+        await PeliculaGenero.destroy({
+            where: { IdPelicula: id },
+            transaction: t
+        });
+
+        // Crear nuevas relaciones
+        if (generos && generos.length > 0) {
+            const relacionesGeneros = generos.map(idGenero => ({
+                IdPelicula: id,
+                IdGenero: idGenero
+            }));
+
+            await PeliculaGenero.bulkCreate(relacionesGeneros, { transaction: t });
+        }
+
+        await t.commit();
+        res.json({
+            mensaje: 'Géneros actualizados exitosamente',
+            generos: generos
+        });
+    } catch (error) {
+        await t.rollback();
+        console.error('Error al actualizar géneros:', error);
+        res.status(500).json({
+            mensaje: 'Error al actualizar los géneros de la película',
             error: error.message
         });
     }
@@ -1118,23 +1220,6 @@ app.get('/reportes/peliculas-genero/:idGenero', verificarToken, verificarAdmin, 
         console.error('Error al obtener reporte por género:', error);
         res.status(500).json({
             mensaje: 'Error al obtener el reporte por género',
-            error: error.message
-        });
-    }
-});
-
-// Endpoint para obtener géneros
-app.get('/generos', async (req, res) => {
-    try {
-        const generos = await Genero.findAll({
-            attributes: ['IdGenero', 'NombreGenero'],
-            order: [['NombreGenero', 'ASC']]
-        });
-        res.json(generos);
-    } catch (error) {
-        console.error('Error al obtener géneros:', error);
-        res.status(500).json({
-            mensaje: 'Error al obtener la lista de géneros',
             error: error.message
         });
     }

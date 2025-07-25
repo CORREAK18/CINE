@@ -7,6 +7,8 @@ function CrudPeliculas() {
     const [directores, setDirectores] = useState([]);
     const [actores, setActores] = useState([]);
     const [actoresSeleccionados, setActoresSeleccionados] = useState([]);
+    const [generos, setGeneros] = useState([]);
+    const [generosSeleccionados, setGenerosSeleccionados] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [currentPelicula, setCurrentPelicula] = useState({
@@ -30,11 +32,34 @@ function CrudPeliculas() {
             await Promise.all([
                 cargarPeliculas(),
                 cargarDirectores(),
-                cargarActores()
+                cargarActores(),
+                cargarGeneros()
             ]);
         };
         cargarDatos();
     }, []);
+
+    const cargarGeneros = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/generos', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al cargar los géneros');
+            }
+
+            const generosData = await response.json();
+            setGeneros(generosData);
+        } catch (error) {
+            console.error('Error cargando géneros:', error);
+            showAlert('Error al cargar los géneros', 'danger');
+        }
+    };
 
     const cargarPeliculas = async () => {
         setLoading(true);
@@ -131,11 +156,35 @@ function CrudPeliculas() {
         }
     };
 
+    const cargarGenerosPelicula = async (idPelicula) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5000/peliculas/${idPelicula}/generos`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al cargar los géneros de la película');
+            }
+
+            const generosPelicula = await response.json();
+            setGenerosSeleccionados(generosPelicula.map(g => g.IdGenero));
+        } catch (error) {
+            console.error('Error cargando géneros de la película:', error);
+            showAlert('Error al cargar los géneros de la película', 'danger');
+        }
+    };
+
     const handleShowModal = async (pelicula = null) => {
         if (pelicula) {
             setCurrentPelicula(pelicula);
             setIsEditing(true);
-            await cargarActoresPelicula(pelicula.IdPelicula);
+            await Promise.all([
+                cargarActoresPelicula(pelicula.IdPelicula),
+                cargarGenerosPelicula(pelicula.IdPelicula)
+            ]);
         } else {
             setCurrentPelicula({
                 IdPelicula: '',
@@ -150,6 +199,7 @@ function CrudPeliculas() {
                 CalificacionPromedio: ''
             });
             setActoresSeleccionados([]);
+            setGenerosSeleccionados([]);
             setIsEditing(false);
         }
         setShowModal(true);
@@ -226,7 +276,9 @@ function CrudPeliculas() {
                 IdDirector: currentPelicula.IdDirector ? parseInt(currentPelicula.IdDirector) : null,
                 UrlPoster: currentPelicula.UrlPoster,
                 UrlTrailer: currentPelicula.UrlTrailer,
-                actores: actoresValidos
+                actores: actoresValidos,
+                generos: generosSeleccionados,
+                generos: generosSeleccionados
             };
 
             const response = await fetch(url, {
@@ -246,15 +298,25 @@ function CrudPeliculas() {
             const peliculaResponse = await response.json();
 
             if (isEditing) {
-                // Actualizar actores después de actualizar la película
-                await fetch(`http://localhost:5000/peliculas/${currentPelicula.IdPelicula}/actores`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ actores: actoresValidos })
-                });
+                // Actualizar actores y géneros después de actualizar la película
+                await Promise.all([
+                    fetch(`http://localhost:5000/peliculas/${currentPelicula.IdPelicula}/actores`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ actores: actoresValidos })
+                    }),
+                    fetch(`http://localhost:5000/peliculas/${currentPelicula.IdPelicula}/generos`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ generos: generosSeleccionados })
+                    })
+                ]);
             }
 
             await cargarPeliculas(); // Recargar la lista de películas
@@ -524,6 +586,30 @@ function CrudPeliculas() {
                                 </Form.Group>
                             </Col>
                         </Row>
+
+                        <hr className="my-4" />
+
+                        <Form.Group className="mb-4">
+                            <Form.Label>Géneros</Form.Label>
+                            <Form.Select 
+                                multiple
+                                value={generosSeleccionados}
+                                onChange={(e) => {
+                                    const selectedOptions = Array.from(e.target.selectedOptions, option => parseInt(option.value));
+                                    setGenerosSeleccionados(selectedOptions);
+                                }}
+                                style={{ height: '120px' }}
+                            >
+                                {generos.map(genero => (
+                                    <option key={genero.IdGenero} value={genero.IdGenero}>
+                                        {genero.NombreGenero}
+                                    </option>
+                                ))}
+                            </Form.Select>
+                            <Form.Text className="text-muted">
+                                Mantén presionada la tecla Ctrl para seleccionar múltiples géneros
+                            </Form.Text>
+                        </Form.Group>
 
                         <hr className="my-4" />
                         
