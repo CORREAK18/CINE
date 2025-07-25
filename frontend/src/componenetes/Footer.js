@@ -1,10 +1,9 @@
-// src/componenetes/Footer.js
 import React from "react";
 import "../componenetes/css/footer.css";
 
 const Footer = () => {
   return (
-    <footer className="footer"> 
+    <footer className="header"> 
       <p>&copy; {new Date().getFullYear()} Mi Aplicación Web. Todos los derechos reservados.</p>
       <nav>
         <ul>
@@ -16,5 +15,7 @@ const Footer = () => {
     </footer>
   );
 };
+
+
 
 export default Footer;

@@ -74,6 +74,7 @@ const DetallePelicula = () => {
             });
             setNuevaResena({ TituloResena: '', CuerpoResena: '', Puntuacion: 1 });
             const responseResenas = await axios.get(`http://localhost:5000/peliculas/${idPelicula}/resenas`);
+            const respuesta = await axios.get(`http://localhost:5000/peliculas/${idPelicula}/actualizar-promedio`);
             setResenas(responseResenas.data);
             alert('Reseña enviada exitosamente');
         } catch (err) {
