@@ -914,15 +914,19 @@ app.get('/peliculas/:id/resenas', async (req, res) => {
       ],
       order: [['FechaCreacion', 'DESC']]
     });
-    if (resenas.length === 0) {
-      return res.status(404).json({ mensaje: 'No se encontraron reseñas para esta película' });
-    }
-    res.json(resenas);
+
+    // ✔️ Devuelve lista vacía con 200 OK
+    res.status(200).json(resenas);
+    
   } catch (error) {
     console.error(error);
-    res.status(500).json({ mensaje: 'Error al obtener reseñas de la película', error: error.message });
+    res.status(500).json({
+      mensaje: 'Error al obtener reseñas de la película',
+      error: error.message
+    });
   }
 });
+
 
 // Obtener reseñas de un usuario
 app.get('/usuarios/:id/resenas', async (req, res) => {

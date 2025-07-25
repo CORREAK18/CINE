@@ -1,3 +1,4 @@
+// src/componenetes/Footer.js
 import React from "react";
 import "../componenetes/css/footer.css";
 
@@ -15,7 +16,5 @@ const Footer = () => {
     </footer>
   );
 };
-
-
 
 export default Footer;
