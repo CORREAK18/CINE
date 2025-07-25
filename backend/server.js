@@ -448,6 +448,7 @@ app.delete('/actores/:id', verificarToken, verificarAdmin, async (req, res) => {
 });
 
 // Endpoints de películas
+// Endpoints de películas
 app.post('/peliculas/registro', verificarToken, verificarAdmin, async (req, res) => {
     try {
         const {
@@ -456,17 +457,16 @@ app.post('/peliculas/registro', verificarToken, verificarAdmin, async (req, res)
             AnioEstreno,
             IdDirector,
             UrlPoster,
-            UrlTrailer
+            UrlTrailer,
+            actores // Se extrae directamente aquí
         } = req.body;
 
         if (!Titulo || !AnioEstreno) {
             return res.status(400).json({ mensaje: 'Título y año de estreno son obligatorios.' });
         }
 
-        const { actores } = req.body; // Array de objetos {IdActor, NombrePersonaje}
-        
         const t = await sequelize.transaction();
-        
+
         try {
             const nuevaPelicula = await Pelicula.create({
                 Titulo,
@@ -491,19 +491,30 @@ app.post('/peliculas/registro', verificarToken, verificarAdmin, async (req, res)
             }
 
             await t.commit();
+
             res.status(201).json({
                 mensaje: 'Película registrada exitosamente',
                 pelicula: nuevaPelicula
             });
 
+        } catch (errorInterno) {
+            await t.rollback();
+            console.error('Error en la transacción:', errorInterno);
+            res.status(500).json({
+                mensaje: 'Error al registrar la película',
+                error: errorInterno.message
+            });
+        }
+
     } catch (error) {
-        console.error('Error al registrar la película:', error);
+        console.error('Error general en el endpoint:', error);
         res.status(500).json({
-            mensaje: 'Error al registrar la película',
+            mensaje: 'Error interno del servidor',
             error: error.message
         });
     }
 });
+
 
 app.put('/peliculas/actualizar/:id', verificarToken, verificarAdmin, async (req, res) => {
     try {
