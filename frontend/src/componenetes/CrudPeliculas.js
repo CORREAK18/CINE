@@ -5,6 +5,8 @@ import '../componenetes/css/crudpeliculas.css';
 function CrudPeliculas() {
     const [peliculas, setPeliculas] = useState([]);
     const [directores, setDirectores] = useState([]);
+    const [actores, setActores] = useState([]);
+    const [actoresSeleccionados, setActoresSeleccionados] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [currentPelicula, setCurrentPelicula] = useState({
@@ -25,8 +27,11 @@ function CrudPeliculas() {
     // Cargar datos al montar el componente
     useEffect(() => {
         const cargarDatos = async () => {
-            await cargarPeliculas();
-            await cargarDirectores();
+            await Promise.all([
+                cargarPeliculas(),
+                cargarDirectores(),
+                cargarActores()
+            ]);
         };
         cargarDatos();
     }, []);
@@ -56,19 +61,25 @@ function CrudPeliculas() {
         }
     };
 
-    const cargarGeneros = async () => {
+    const cargarActores = async () => {
         try {
-            // Simulando datos de géneros
-            const generosData = [
-                { IdGenero: 1, NombreGenero: "Acción" },
-                { IdGenero: 2, NombreGenero: "Drama" },
-                { IdGenero: 3, NombreGenero: "Ciencia Ficción" },
-                { IdGenero: 4, NombreGenero: "Romance" },
-                { IdGenero: 5, NombreGenero: "Aventura" }
-            ];
-            // setGeneros(generosData); // Comentado porque no se usa actualmente
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/actores', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al cargar los actores');
+            }
+
+            const actoresData = await response.json();
+            setActores(actoresData);
         } catch (error) {
-            console.error('Error cargando géneros:', error);
+            console.error('Error cargando actores:', error);
+            showAlert('Error al cargar los actores', 'danger');
         }
     };
 
@@ -98,10 +109,33 @@ function CrudPeliculas() {
         setTimeout(() => setAlert({ show: false, message: '', variant: '' }), 3000);
     };
 
-    const handleShowModal = (pelicula = null) => {
+    const cargarActoresPelicula = async (idPelicula) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5000/peliculas/${idPelicula}/actores`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al cargar los actores de la película');
+            }
+
+            const actoresPelicula = await response.json();
+            setActoresSeleccionados(actoresPelicula);
+        } catch (error) {
+            console.error('Error cargando actores de la película:', error);
+            showAlert('Error al cargar los actores de la película', 'danger');
+        }
+    };
+
+    const handleShowModal = async (pelicula = null) => {
         if (pelicula) {
             setCurrentPelicula(pelicula);
             setIsEditing(true);
+            await cargarActoresPelicula(pelicula.IdPelicula);
         } else {
             setCurrentPelicula({
                 IdPelicula: '',
@@ -115,6 +149,7 @@ function CrudPeliculas() {
                 Estado: 'Publicado',
                 CalificacionPromedio: ''
             });
+            setActoresSeleccionados([]);
             setIsEditing(false);
         }
         setShowModal(true);
@@ -145,6 +180,28 @@ function CrudPeliculas() {
         }));
     };
 
+    const handleAgregarActor = () => {
+        setActoresSeleccionados([
+            ...actoresSeleccionados,
+            { IdActor: '', NombrePersonaje: '' }
+        ]);
+    };
+
+    const handleEliminarActor = (index) => {
+        const nuevosActores = actoresSeleccionados.filter((_, i) => i !== index);
+        setActoresSeleccionados(nuevosActores);
+    };
+
+    const handleActorChange = (index, campo, valor) => {
+        const nuevosActores = actoresSeleccionados.map((actor, i) => {
+            if (i === index) {
+                return { ...actor, [campo]: valor };
+            }
+            return actor;
+        });
+        setActoresSeleccionados(nuevosActores);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -157,13 +214,19 @@ function CrudPeliculas() {
             
             const method = isEditing ? 'PUT' : 'POST';
             
+            // Validar actores seleccionados
+            const actoresValidos = actoresSeleccionados.filter(
+                actor => actor.IdActor && actor.NombrePersonaje
+            );
+            
             const peliculaData = {
                 Titulo: currentPelicula.Titulo,
                 Sinopsis: currentPelicula.Sinopsis,
                 AnioEstreno: parseInt(currentPelicula.AnioEstreno),
                 IdDirector: currentPelicula.IdDirector ? parseInt(currentPelicula.IdDirector) : null,
                 UrlPoster: currentPelicula.UrlPoster,
-                UrlTrailer: currentPelicula.UrlTrailer
+                UrlTrailer: currentPelicula.UrlTrailer,
+                actores: actoresValidos
             };
 
             const response = await fetch(url, {
@@ -178,6 +241,20 @@ function CrudPeliculas() {
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.mensaje || 'Error al guardar la película');
+            }
+
+            const peliculaResponse = await response.json();
+
+            if (isEditing) {
+                // Actualizar actores después de actualizar la película
+                await fetch(`http://localhost:5000/peliculas/${currentPelicula.IdPelicula}/actores`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ actores: actoresValidos })
+                });
             }
 
             await cargarPeliculas(); // Recargar la lista de películas
@@ -447,6 +524,65 @@ function CrudPeliculas() {
                                 </Form.Group>
                             </Col>
                         </Row>
+
+                        <hr className="my-4" />
+                        
+                        <div className="actores-section">
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Actores</h5>
+                                <Button 
+                                    variant="outline-primary" 
+                                    size="sm"
+                                    onClick={handleAgregarActor}
+                                >
+                                    Agregar Actor
+                                </Button>
+                            </div>
+
+                            {actoresSeleccionados.map((actor, index) => (
+                                <Row key={index} className="mb-3 align-items-end">
+                                    <Col md={5}>
+                                        <Form.Group>
+                                            <Form.Label>Actor</Form.Label>
+                                            <Form.Select
+                                                value={actor.IdActor}
+                                                onChange={(e) => handleActorChange(index, 'IdActor', e.target.value)}
+                                                required
+                                            >
+                                                <option value="">Seleccione un actor</option>
+                                                {actores.map(a => (
+                                                    <option key={a.IdActor} value={a.IdActor}>
+                                                        {a.Nombres} {a.Apellidos}
+                                                    </option>
+                                                ))}
+                                            </Form.Select>
+                                        </Form.Group>
+                                    </Col>
+                                    <Col md={5}>
+                                        <Form.Group>
+                                            <Form.Label>Nombre del Personaje</Form.Label>
+                                            <Form.Control
+                                                type="text"
+                                                value={actor.NombrePersonaje}
+                                                onChange={(e) => handleActorChange(index, 'NombrePersonaje', e.target.value)}
+                                                placeholder="Nombre del personaje"
+                                                required
+                                            />
+                                        </Form.Group>
+                                    </Col>
+                                    <Col md={2}>
+                                        <Button 
+                                            variant="outline-danger" 
+                                            size="sm"
+                                            onClick={() => handleEliminarActor(index)}
+                                            className="w-100"
+                                        >
+                                            Eliminar
+                                        </Button>
+                                    </Col>
+                                </Row>
+                            ))}
+                        </div>
 
                         <Modal.Footer>
                             <Button variant="secondary" onClick={handleCloseModal}>
