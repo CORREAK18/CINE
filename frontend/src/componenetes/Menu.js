@@ -31,7 +31,8 @@ function Menu() {
                         { path: "/admin/peliculas", text: "Gestión de Películas" },
                         { path: "/admin/usuarios", text: "Gestión de Usuarios" },
                         { path: "/admin/directores", text: "Gestión de Directores" },
-                        { path: "/admin/actores", text: "Gestión de Actores" }
+                        { path: "/admin/actores", text: "Gestión de Actores" },
+                        { path: "/admin/reportes", text: "Reportes" }
                     ];
                 default:
                     return baseMenu;

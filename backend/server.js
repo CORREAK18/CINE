@@ -919,6 +919,71 @@ app.get('/resenas/usuario/:id', verificarToken, async (req, res) => {
     }
 });
 
+// Endpoints para reportes
+app.get('/reportes/peliculas-puntuacion', verificarToken, verificarAdmin, async (req, res) => {
+    try {
+        console.log('Ejecutando sp_PeliculasMejorPuntuadas...');
+        const resultados = await sequelize.query(
+            'EXEC sp_PeliculasMejorPuntuadas',
+            {
+                type: QueryTypes.SELECT
+            }
+        );
+        console.log('Resultados:', resultados);
+        res.json(resultados || []); // Enviar array vacío si no hay resultados
+    } catch (error) {
+        console.error('Error al obtener reporte por puntuación:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener el reporte por puntuación',
+            error: error.message
+        });
+    }
+});
+
+app.get('/reportes/peliculas-genero/:idGenero', verificarToken, verificarAdmin, async (req, res) => {
+    const { idGenero } = req.params;
+    
+    if (!idGenero || isNaN(idGenero)) {
+        return res.status(400).json({ mensaje: 'ID de género inválido' });
+    }
+
+    try {
+        console.log('Ejecutando sp_PeliculasPorGenero con idGenero:', idGenero);
+        const resultados = await sequelize.query(
+            'EXEC sp_PeliculasPorGenero @IdGenero = :idGenero',
+            {
+                replacements: { idGenero: parseInt(idGenero) },
+                type: QueryTypes.SELECT
+            }
+        );
+        console.log('Resultados:', resultados);
+        res.json(resultados || []); // Enviar array vacío si no hay resultados
+    } catch (error) {
+        console.error('Error al obtener reporte por género:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener el reporte por género',
+            error: error.message
+        });
+    }
+});
+
+// Endpoint para obtener géneros
+app.get('/generos', async (req, res) => {
+    try {
+        const generos = await Genero.findAll({
+            attributes: ['IdGenero', 'NombreGenero'],
+            order: [['NombreGenero', 'ASC']]
+        });
+        res.json(generos);
+    } catch (error) {
+        console.error('Error al obtener géneros:', error);
+        res.status(500).json({
+            mensaje: 'Error al obtener la lista de géneros',
+            error: error.message
+        });
+    }
+});
+
 // Inicializar servidor
 sequelize.authenticate()
     .then(() => {
